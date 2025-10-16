@@ -14,6 +14,10 @@ func main() {
 	root := e.Group("/api")
 	rssRouter := root.Group("/rss")
 
+	// route to seed in data to the DB
+	e.POST("seed", Seed)
+	e.GET("view", View)
+
 	rssRouter.POST("", rss.AddLinkToFeedHanlder)
 	rssRouter.POST("/subscribe", rss.SubscribeToRssFeedHandler)
 
