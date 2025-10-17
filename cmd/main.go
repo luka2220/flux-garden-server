@@ -3,13 +3,20 @@ package main
 import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/gommon/log"
 	"github.com/luka2220/flux-garden-server/services/rss"
 )
 
 func main() {
 	e := echo.New()
 
+	e.Use(middleware.CORSWithConfig(
+		middleware.CORSConfig{
+			AllowOrigins: []string{"http://localhost:5173"},
+		},
+	))
 	e.Use(middleware.Logger())
+	e.Logger.SetLevel(log.DEBUG)
 
 	root := e.Group("/api")
 	rssRouter := root.Group("/rss")
@@ -20,6 +27,7 @@ func main() {
 
 	rssRouter.POST("", rss.AddLinkToFeedHanlder)
 	rssRouter.POST("/subscribe", rss.SubscribeToRssFeedHandler)
+	rssRouter.GET("/feed", rss.FetchAllFeeds)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }

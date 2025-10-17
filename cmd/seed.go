@@ -100,7 +100,6 @@ func Seed(c echo.Context) error {
 }
 
 func View(c echo.Context) error {
-
 	db, err := gorm.Open(sqlite.Open("./db/database.db"), &gorm.Config{})
 	if err != nil {
 		c.Echo().Logger.Error("Error opening DB")
@@ -120,6 +119,8 @@ func View(c echo.Context) error {
 			message: "Something went wrong",
 		})
 	}
+
+	c.Echo().Logger.Info(seed)
 
 	return c.JSON(http.StatusOK, seed)
 }
