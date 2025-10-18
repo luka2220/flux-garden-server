@@ -1,13 +1,13 @@
 package rss
 
 import (
-	"context"
-	"fmt"
+	"database/sql"
 	"net/http"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type serverError struct {
@@ -19,11 +19,6 @@ type addLinkToFeedSchema struct {
 	Name string `json:"name"`
 }
 
-type subscribeToRssFeedSchema struct {
-	Link string `json:"link"`
-	Name string `json:"name"`
-}
-
 // Add an rss link to the feed
 func AddLinkToFeedHanlder(c echo.Context) error {
 	body := new(addLinkToFeedSchema)
@@ -31,46 +26,58 @@ func AddLinkToFeedHanlder(c echo.Context) error {
 		return err
 	}
 
-	fmt.Println(body)
-
-	return c.String(http.StatusOK, "Route for adding an RSS link to the feed")
-}
-
-// Create an rss subscription to an external feed
-func SubscribeToRssFeedHandler(c echo.Context) error {
-	body := new(subscribeToRssFeedSchema)
-	if err := c.Bind(body); err != nil {
-		return err
+	db, ok := c.Get("db").(*sql.DB)
+	if !ok || db == nil {
+		c.Echo().Logger.Error("db not available in context")
+		return c.JSON(http.StatusInternalServerError, serverError{message: "Something went wrong."})
 	}
 
-	fmt.Println(body)
+	id := uuid.New().String()
+	createdAt := time.Now().UTC().Format(time.RFC3339)
 
-	return c.String(http.StatusOK, "Route for subscribing to an external RSS feed")
+	if _, err := db.Exec("INSERT INTO Feeds (id, created_at, updated_at, name, link) VALUES (?, ?, ?, ?, ?)", id, createdAt, createdAt, body.Name, body.Link); err != nil {
+		c.Echo().Logger.Error("Unable to insert data into db: ", err.Error())
+		return c.JSON(http.StatusInternalServerError, serverError{message: "Something went wrong."})
+	}
+
+	return c.NoContent(http.StatusOK)
 }
 
 // Fetch all rss feeds in DB
 func FetchAllFeeds(c echo.Context) error {
-	db, err := gorm.Open(sqlite.Open("./db/database.db"), &gorm.Config{})
+	db, ok := c.Get("db").(*sql.DB)
+	if !ok || db == nil {
+		c.Echo().Logger.Error("db not available in context")
+		return c.JSON(http.StatusInternalServerError, serverError{message: "Something went wrong."})
+	}
+
+	rows, err := db.Query("select * from feeds")
 	if err != nil {
-		c.Echo().Logger.Error("Error opening DB")
+		c.Echo().Logger.Error("Error opening db connection: ", err.Error())
 		return c.JSON(http.StatusInternalServerError, serverError{
 			message: "Something went wrong.",
 		})
 	}
 
-	ctx := context.Background()
-	// migrate the schema
-	db.AutoMigrate(&Feed{})
+	defer rows.Close()
 
-	seed, err := gorm.G[Feed](db).Raw("select * from feeds").Find(ctx)
-	if err != nil {
-		c.Echo().Logger.Error("Error fetching data", err)
-		return c.JSON(http.StatusInternalServerError, serverError{
-			message: "Something went wrong",
-		})
+	feed := make([]Feed, 5)
+
+	for rows.Next() {
+		var f Feed
+
+		err := rows.Scan(&f.Id, &f.CreatedAt, &f.UpdatedAt, &f.Name, &f.Link)
+		if err != nil {
+			c.Echo().Logger.Error("Scanning DB row: ", err.Error())
+			return c.JSON(http.StatusInternalServerError, serverError{
+				message: "Something went wrong.",
+			})
+		}
+
+		feed = append(feed, f)
 	}
 
-	c.Echo().Logger.Info(seed)
+	c.Echo().Logger.Info(feed)
 
-	return c.JSON(http.StatusOK, seed)
+	return c.JSON(http.StatusOK, "fetched")
 }
