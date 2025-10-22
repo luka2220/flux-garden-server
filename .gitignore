@@ -1,0 +1,23 @@
+# Python-related files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+.venv/
+.env/
+
+# macOS-specific files
+.DS_Store
+
+# IDE-specific files
+.vscode/
+.idea/
+
+# Python version management
+.python-version
+
+# Notes
+django.md

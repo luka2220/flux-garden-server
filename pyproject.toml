@@ -1,0 +1,10 @@
+[project]
+name = "flux-garden-server"
+version = "0.1.0"
+description = "Flux garden backend api"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "django>=5.2.7",
+    "djangorestframework>=3.16.1",
+]
