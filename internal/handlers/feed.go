@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/luka2220/flux-garden-server/internal/models"
+	"github.com/mmcdole/gofeed"
 	"gorm.io/gorm"
 )
 
@@ -77,5 +78,53 @@ func (h *FeedHandler) GetFeedById(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, feed)
+	// TODO: Fetch the rss xml page and parse it
+	// TODO: Sanatize the html
+
+	fp := gofeed.NewParser()
+
+	parsedFeed, err := fp.ParseURL(feed.Url)
+	if err != nil {
+		fmt.Println("An error occurred parsing the feed: ", err)
+		c.JSON(http.StatusInternalServerError, "Something went wrong")
+		return
+	}
+
+	// TODO: Return the parsed feed title, author, and description
+	// TODO: Consctruct elements for each link in the feed i.e title, link, description
+
+	type parsedFeedData struct {
+		Title        string        `json:"title"`
+		Link         string        `json:"link"`
+		Content_html string        `json:"content_html"`
+		Image        *gofeed.Image `json:"image"`
+	}
+
+	feedItems := make([]parsedFeedData, 0, len(parsedFeed.Items))
+
+	for _, item := range parsedFeed.Items {
+		feedItems = append(feedItems, parsedFeedData{
+			Title:        item.Title,
+			Link:         item.Link,
+			Content_html: item.Content,
+			Image:        item.Image,
+		})
+	}
+
+	type content struct {
+		Title       string           `json:"title"`
+		Link        string           `json:"link"`
+		Description string           `json:"description"`
+		Feed        []parsedFeedData `json:"feed"`
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"item": feed,
+		"content": content{
+			Title:       parsedFeed.Title,
+			Link:        parsedFeed.Link,
+			Description: parsedFeed.Description,
+			Feed:        feedItems,
+		},
+	})
 }
