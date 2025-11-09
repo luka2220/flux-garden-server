@@ -12,7 +12,7 @@ func FeedRoutes(router *gin.Engine, db *gorm.DB) {
 
 	feedHandler := handlers.FeedHandler{DB: db}
 
-	feedRouter.GET("/", feedHandler.GetFeed)
-	feedRouter.POST("/", feedHandler.CreateFeed)
+	feedRouter.GET("", feedHandler.GetFeed)
+	feedRouter.POST("", feedHandler.CreateFeed)
 	feedRouter.GET("/:id", feedHandler.GetFeedById)
 }

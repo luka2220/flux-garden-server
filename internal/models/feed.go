@@ -8,11 +8,11 @@ import (
 )
 
 type Feed struct {
-	Id        string    `gorm:"primaryKey;type:varchar(255)"`
-	Url       string    `gorm:"not null"`
-	Name      string    `gorm:"not null"`
-	CreatedAt time.Time `gorm:"autoCreateTime"`
-	UpdatedAt time.Time `gorm:"autoUpdateTime"`
+	Id        string    `gorm:"primaryKey;type:varchar(255)" json:"id"`
+	Url       string    `gorm:"not null" json:"url"`
+	Name      string    `gorm:"not null" json:"name"`
+	CreatedAt time.Time `gorm:"autoCreateTime" json:"created_at"`
+	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"updated_at"`
 }
 
 func (f *Feed) BeforeCreate(tx *gorm.DB) error {
