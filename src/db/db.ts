@@ -9,8 +9,6 @@ const mongoClient = handleSyncError<() => MongoClient>("mongoClient", () => {
 
   function client() {
     if (clientConnection instanceof MongoClient) return clientConnection;
-    const connectionString = process.env.DB_CONNECTION_STRING!;
-    console.log("Connecting to MongoDB at", connectionString);
     clientConnection = new MongoClient(process.env.DB_CONNECTION_STRING!);
     return clientConnection;
   }

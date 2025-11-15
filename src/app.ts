@@ -6,6 +6,8 @@ import feedRouter from "./routes/feed";
 
 const app = express();
 
+app.use(express.json());
+
 app.use(
   async (
     req: express.Request,

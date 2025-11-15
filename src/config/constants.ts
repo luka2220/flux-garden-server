@@ -17,4 +17,7 @@ export enum StatusResponseCode {
 /** Response Messages */
 export enum ResponseMessages {
   ServerError = "Something went wrong",
+  InvalidRequestBody = "Invalid request body",
+  InvalidRequestParams = "Invalid request params",
+  ResourceNotFound = "Resouce not found",
 }
