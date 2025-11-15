@@ -1,27 +1,35 @@
-import express from "express";
+import { handleControllerError } from "../utils";
+import { mongoInstance } from "../db";
+import { StatusResponseCode } from "../config/constants";
 
-export const getFeed = async (req: express.Request, res: express.Response) => {
-  try {
-    return res.sendStatus(200);
-  } catch (error) {
-    console.error("An error occurred in the getFeed controller:", {
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-    });
-    return res.status(500).send("Something went wrong");
+/** Creates a new feed */
+export const createFeed = handleControllerError(
+  "createFeed",
+  async (req, res) => {
+    const feed = await mongoInstance
+      .db("sample_mflix")
+      .collection("movies")
+      .findOne({
+        title: "Back to the Future",
+      });
+
+    return res.status(StatusResponseCode.Created).json(feed);
   }
-};
+);
 
-export const getFeedById = async (
-  req: express.Request,
-  res: express.Response
-) => {
-  res.send("Hello World");
-};
+/** Gets all feeds */
+export const getFeed = handleControllerError("getFeed", async (req, res) => {
+  return res
+    .status(StatusResponseCode.Success)
+    .send("Feeds fetched successfully");
+});
 
-export const createFeed = async (
-  req: express.Request,
-  res: express.Response
-) => {
-  res.send("Hello World");
-};
+/** Gets a feed by id */
+export const getFeedById = handleControllerError(
+  "getFeedById",
+  async (req, res) => {
+    return res
+      .status(StatusResponseCode.Success)
+      .send("Feed fetched successfully");
+  }
+);
