@@ -25,5 +25,5 @@ COPY --from=build /app/pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile --prod
 
 COPY --from=build /app/dist ./dist
-EXPOSE 8080
+EXPOSE 8000
 CMD ["node", "dist/app.js"]
