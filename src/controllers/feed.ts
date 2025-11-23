@@ -26,7 +26,7 @@ export const createFeed = handleControllerError(
     });
 
     return res.sendStatus(StatusResponseCode.Created);
-  },
+  }
 );
 
 /** Gets all feeds */
@@ -73,5 +73,5 @@ export const getFeedById = handleControllerError(
       item: feed,
       content: parsedFeed,
     });
-  },
+  }
 );
