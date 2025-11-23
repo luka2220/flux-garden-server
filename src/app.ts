@@ -22,6 +22,7 @@ app.use(
     next: express.NextFunction,
   ) => {
     console.log(`${req.method} -> ${req.url}`); // simple logging for now...
+    console.log(req);
     next();
   },
 );
