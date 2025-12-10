@@ -1,4 +1,7 @@
+# Environment
 .env
+node_modules
+
+# Editor
 .vscode
-creds.json
-.venv
+.zed
