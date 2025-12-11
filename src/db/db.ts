@@ -1,5 +1,5 @@
 import { Database } from "bun:sqlite";
-import { DB_FILE_PATH } from "./constants";
+import { DB_FILE_PATH } from "../constants";
 
 let db: undefined | Database;
 
