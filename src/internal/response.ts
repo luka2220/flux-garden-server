@@ -2,8 +2,8 @@
 interface StatusResponse {
   json(data: Object | null): Response;
   sendStatus(status: number): Response;
-  statusText(data: string): Response;
   status(status: number): StatusStore;
+  text(msg: string): Response;
 }
 
 // Store data
@@ -21,19 +21,18 @@ export const Resp: StatusStore = {
       },
     });
   },
+  text(this: StatusStore, msg: string): Response {
+    return new Response(msg, {
+      status: this.stat,
+      headers: {
+        "Content-Type": "text/plain",
+      },
+    });
+  },
   sendStatus(this: StatusStore, status: number): Response {
     return new Response(null, {
       status,
       headers: { "Content-Type": "text/plain" },
-    });
-  },
-  statusText(this: StatusStore, data: string): Response {
-    return new Response(null, {
-      status: this.stat,
-      statusText: data,
-      headers: {
-        "Content-Type": "text/plain",
-      },
     });
   },
   status(this: StatusStore, status: number): StatusStore {

@@ -1,19 +1,24 @@
-import {
-  getFeedController,
-  createFeedController,
-  getAllFeedController,
-} from "./feed";
+import { Hono } from "hono";
 
-const server = Bun.serve({
+import feedRouter from "./routers/feedRouter";
+import { logger } from "hono/logger";
+import { cors } from "hono/cors";
+
+const app = new Hono();
+
+app.use(logger());
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    allowHeaders: ["Content-Type", "Authorization"],
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    credentials: true,
+  })
+);
+
+app.route("/v1/feed", feedRouter);
+
+export default {
   port: 8000,
-  routes: {
-    "/v1/feed": {
-      GET: getAllFeedController,
-      POST: createFeedController,
-    },
-    "/v1/feed/:id": getFeedController,
-  },
-  fetch(req) {
-    return new Response("Route not found", { status: 404 });
-  },
-});
+  fetch: app.fetch,
+};
