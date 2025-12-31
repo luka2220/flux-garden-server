@@ -20,4 +20,8 @@
 - [ ] Add a search functionality for rss feeds based on a category (software, technical, finanace)
 - [ ] Add a way to display links in rss feeds based on subscribed topics
 
+## Functionality
+
+- [ ] Add a background task/cron job daily to fetch all feeds
+
 ## Bugs
