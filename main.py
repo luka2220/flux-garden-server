@@ -4,14 +4,14 @@ from contextlib import asynccontextmanager
 
 import certifi
 import feedparser
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlmodel import Session, select
 
 from internal.feed import construct_feed
-from models.feed import Feeds, get_session, initalize_db
+from models.feed import Feeds, Users, get_session, initalize_db
 
 ssl._create_default_https_context = lambda: ssl.create_default_context(
     cafile=certifi.where()
@@ -87,3 +87,24 @@ def fetch_feed(feed_id: str, session: Session = Depends(get_session)):
     except Exception as e:
         print('An error occurred in the fetch_feed controller: ', e)
         return JSONResponse(status_code=500, content='Something went wrong')
+
+
+class UserSignupSchema(BaseModel):
+    email: str
+    name: str
+
+
+@app.post('/v1/auth/signup')
+def user_signup(user: UserSignupSchema, session: Session = Depends(get_session)):
+    stmt = select(Users).where(Users.email == user.email)
+    user_result = session.exec(stmt).first()
+    if user_result is not None:
+        raise HTTPException(
+            status_code=400, detail='User with that email already exists'
+        )
+
+    new_user = Users(email=user.email, name=user.name)
+    session.add(new_user)
+    session.commit()
+
+    return 200
