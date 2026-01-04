@@ -1,6 +1,7 @@
 import logging
 import ssl
 from contextlib import asynccontextmanager
+from typing import Annotated
 
 import certifi
 import feedparser
@@ -11,7 +12,8 @@ from pydantic import BaseModel
 from sqlmodel import Session, select
 
 from internal.feed import construct_feed
-from models.feed import Feeds, Users, get_session, initalize_db
+from internal.queries import RecordToCheck, ValidTables, doesRecordExist
+from models.feed import Feeds, UserFeeds, Users, get_session, initalize_db
 
 ssl._create_default_https_context = lambda: ssl.create_default_context(
     cafile=certifi.where()
@@ -25,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_: FastAPI):
     logger.info('Server starting...')
     initalize_db()
     yield
@@ -45,7 +47,7 @@ app.add_middleware(
 
 
 @app.get('/v1/feed')
-def fetch_feeds(session: Session = Depends(get_session)):
+def fetch_feeds(session: Annotated[Session, Depends(get_session)]):
     query = select(Feeds)
     results = session.exec(query).all()
 
@@ -60,7 +62,7 @@ class FeedSchema(BaseModel):
 
 
 @app.post('/v1/feed')
-def create_feed(feed: FeedSchema, session: Session = Depends(get_session)):
+def create_feed(feed: FeedSchema, session: Annotated[Session, Depends(get_session)]):
     new_feed = Feeds(name=feed.name, link=feed.link)
     session.add(new_feed)
     session.commit()
@@ -69,7 +71,7 @@ def create_feed(feed: FeedSchema, session: Session = Depends(get_session)):
 
 
 @app.get('/v1/feed/{feed_id}')
-def fetch_feed(feed_id: str, session: Session = Depends(get_session)):
+def fetch_feed(feed_id: str, session: Annotated[Session, Depends(get_session)]):
     try:
         result = session.get(Feeds, feed_id)
 
@@ -95,7 +97,10 @@ class UserSignupSchema(BaseModel):
 
 
 @app.post('/v1/auth/signup')
-def user_signup(user: UserSignupSchema, session: Session = Depends(get_session)):
+def user_signup(
+    user: UserSignupSchema,
+    session: Annotated[Session, Depends(get_session)],
+):
     stmt = select(Users).where(Users.email == user.email)
     user_result = session.exec(stmt).first()
     if user_result is not None:
@@ -105,6 +110,33 @@ def user_signup(user: UserSignupSchema, session: Session = Depends(get_session))
 
     new_user = Users(email=user.email, name=user.name)
     session.add(new_user)
+    session.commit()
+
+    return 200
+
+
+class FeedSubscriptionSchema(BaseModel):
+    feed_id: str
+    user_id: str
+
+
+@app.post('/v1/feed/subscribe')
+def feed_subscribe(
+    feed_subscription: FeedSubscriptionSchema,
+    session: Annotated[Session, Depends(get_session)],
+):
+    feed_id, user_id = feed_subscription.feed_id, feed_subscription.user_id
+    record_data = RecordToCheck(pk=user_id, sk=feed_id, table_name=ValidTables.UserFeed)
+    if doesRecordExist(record_data, session):
+        return JSONResponse(
+            status_code=400,
+            content={
+                'message': f'User with id {user_id} is already subscribed to feed with id {feed_id}'
+            },
+        )
+
+    new_subscription = UserFeeds(user_id=user_id, feed_id=feed_id)
+    session.add(new_subscription)
     session.commit()
 
     return 200
