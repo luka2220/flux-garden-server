@@ -1,11 +1,10 @@
-import { Database } from "bun:sqlite";
-import { DB_FILE_PATH } from "../constants";
+import { BunSQLiteDatabase, drizzle } from 'drizzle-orm/bun-sqlite';
 
-let db: undefined | Database;
+let db: undefined | BunSQLiteDatabase;
 
 export function getDbInstance() {
   if (!db) {
-    db = new Database(DB_FILE_PATH);
+    db = drizzle(process.env.DB_FILE_NAME!);
   }
 
   return db;
