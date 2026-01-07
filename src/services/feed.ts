@@ -6,7 +6,7 @@ import { feedsTable } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { postFeedBodySchema } from '../shared/schemas';
 
-const feedService = new Hono();
+export const feedService = new Hono();
 const db = getDbInstance();
 const parser = new Praser();
 
@@ -41,5 +41,3 @@ feedService.get('/:id', async (c) => {
     feed: d,
   });
 });
-
-export default feedService;
