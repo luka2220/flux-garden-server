@@ -1,11 +1,8 @@
-import { BunSQLiteDatabase, drizzle } from 'drizzle-orm/bun-sqlite';
+import { drizzle, DrizzleD1Database } from 'drizzle-orm/d1';
+import * as schema from './schema';
 
-let db: undefined | BunSQLiteDatabase;
+export type Database = DrizzleD1Database<typeof schema>;
 
-export function getDbInstance() {
-  if (!db) {
-    db = drizzle(process.env.DB_FILE_NAME!);
-  }
-
-  return db;
+export function getDbInstance(d1: D1Database): Database {
+  return drizzle(d1, { schema });
 }

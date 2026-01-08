@@ -2,10 +2,10 @@
 .env
 node_modules
 
-
 # Editor
 .vscode
 .zed
+.claude
 
 # Misc
 todos.md
