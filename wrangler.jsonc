@@ -1,19 +1,31 @@
 {
-	"name": "flux-garden-server",
-	"main": "src/index.ts",
-	// "compatibility_date": "2024-01-01",
-	"compatibility_date": "2024-09-23",
-	"compatibility_flags": [
-		"nodejs_compat"
-	],
-	"dev": {
-		"port": 8000
-	},
-	"d1_databases": [
-		{
-			"binding": "flux_garden_db",
-			"database_name": "flux-garden-db",
-			"database_id": "e6a06137-9e63-4cca-88af-0d11972db1d7"
-		}
-	]
+  "name": "flux-garden-server",
+  "main": "src/index.ts",
+  "compatibility_date": "2024-09-23",
+  "compatibility_flags": ["nodejs_compat"],
+  "dev": {
+    "port": 8000
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "flux-garden-db",
+      "database_id": "e6a06137-9e63-4cca-88af-0d11972db1d7"
+    }
+  ],
+  "observability": {
+    "enabled": false,
+    "head_sampling_rate": 1,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "persist": true,
+      "invocation_logs": true
+    },
+    "traces": {
+      "enabled": false,
+      "persist": true,
+      "head_sampling_rate": 1
+    }
+  }
 }
