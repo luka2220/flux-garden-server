@@ -36,6 +36,7 @@ feedService.get('/:id', async (c) => {
     .where(eq(feedsTable.id, id))
     .limit(1)
     .execute();
+
   if (d.length === 0) return c.text('Feed not found', 404);
 
   const feed = d[0]!;
