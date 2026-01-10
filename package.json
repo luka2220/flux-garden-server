@@ -8,7 +8,7 @@
     "dev:wrangler": "wrangler dev",
     "deploy": "wrangler deploy",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "wrangler d1 migrations apply flux-garden-db",
+    "db:migrate:remote": "wrangler d1 migrations apply flux-garden-db --remote",
     "db:migrate:local": "wrangler d1 migrations apply flux-garden-db --local",
     "db:studio": "drizzle-kit studio"
   },

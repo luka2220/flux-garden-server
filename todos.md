@@ -2,6 +2,7 @@
 
 ## Priority
 
+- [ ] Add in cloudflare secret for the frontend domain
 - [ ] Add loggging
 - [ ] Add in hono
 - [ ] Figure out how to store feed items permanently went fecthed once from an rss feed

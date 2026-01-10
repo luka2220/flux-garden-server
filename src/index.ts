@@ -2,23 +2,12 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 
-import { googleAuth } from '@hono/oauth-providers/google';
-
+import type { HonoContext } from "./shared/types/index"
 import { errorHandler } from './middleware/errorHandler';
 import { feedService, userService, authService } from './services';
-import { getDbInstance, Database } from './db/db';
+import { getDbInstance } from './db/db';
 
-type Bindings = {
-  DB: D1Database;
-  GOOGLE_CLIENT_ID: string;
-  GOOGLE_CLIENT_SECRET: string;
-};
-
-type Variables = {
-  db: Database;
-};
-
-const app = new Hono<{ Bindings: Bindings; Variables: Variables }>();
+const app = new Hono<HonoContext>();
 
 // Inject database into context
 app.use('*', async (c, next) => {
@@ -36,15 +25,6 @@ app.use(
     credentials: true,
   })
 );
-
-app.use('/v1/auth/google/cb', async (c, next) => {
-  const handler = googleAuth({
-    scope: ['openid', 'profile', 'email'],
-    client_id: c.env.GOOGLE_CLIENT_ID,
-    client_secret: c.env.GOOGLE_CLIENT_SECRET,
-  });
-  return handler(c, next);
-});
 
 app.onError(errorHandler);
 
