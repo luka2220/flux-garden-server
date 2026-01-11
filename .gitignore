@@ -10,4 +10,5 @@ node_modules
 
 # Misc
 todos.md
-notes.md
+notes-auth.md
+notes-db.md

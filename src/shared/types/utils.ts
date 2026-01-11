@@ -1,4 +1,4 @@
-import type { Database } from "@/db/db";
+import type { Database } from '@/db/db';
 
 /**
  * Type binding for cloudflare secrets to inject into hono context
@@ -7,6 +7,7 @@ export type Bindings = {
   DB: D1Database;
   GOOGLE_CLIENT_ID: string;
   GOOGLE_CLIENT_SECRET: string;
+  JWT_SECRET: string;
 };
 
 /**
@@ -21,4 +22,4 @@ export type Variables = {
 export type HonoContext = {
   Bindings: Bindings;
   Variables: Variables;
-}
+};

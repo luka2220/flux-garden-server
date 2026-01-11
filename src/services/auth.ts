@@ -14,15 +14,14 @@ authService.get(
       client_id: c.env.GOOGLE_CLIENT_ID,
       client_secret: c.env.GOOGLE_CLIENT_SECRET,
       scope: ['openid', 'profile', 'email'],
+      access_type: 'offline',
+      prompt: 'consent',
     });
     return handler(c, next);
   },
   async (c) => {
-    // state=3lnahbdecc5-j3rsyilqp2-dpxp003ds3&code=4%2F0ASc3gC1cWMdmcvRXXHYEOcl8CoUsfn8hLE3l5OYlvy1CNAR_xiQC8p-xoozTNo52dZMASA
-    // scope=email+profile+openid+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.profile
-    // authuser=0
-    // prompt=none
     const token = c.get('token');
+    const refreshToken = c.get('refresh-token');
     const grantedScopes = c.get('granted-scopes');
     const user = c.get('user-google');
     const db = c.get('db');
@@ -37,19 +36,36 @@ authService.get(
       return c.redirect('http://localhost:5173');
     }
 
-    const userData = await db
+    const userRecords = await db
       .select()
       .from(usersTable)
-      .where(eq(usersTable.id, user?.id));
+      .where(eq(usersTable.id, user.id!))
+      .limit(1)
+      .execute();
 
-    // Do some auth/login logic here
-    // Cookie/token refreshing...
+    let userData = userRecords[0];
 
-    // return c.redirect('http://localhost:5173');
+    if (!userData) {
+      // Create new user here
+      await db.insert(usersTable).values({
+        id: user?.id!,
+        email: user?.email!,
+        name: user?.name!,
+        refresh_token: refreshToken?.token!,
+        photo_url: user?.picture!,
+      });
+    }
+
+    // Create JWT here
+    // const payload = {
+    //   userId: user?.id!
+    // }
+
     return c.json({
       token,
       grantedScopes,
       user,
+      refreshToken,
     });
   }
 );

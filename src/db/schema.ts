@@ -6,41 +6,41 @@ export const feedsTable = sqliteTable('feeds', {
     .$defaultFn(() => crypto.randomUUID()),
   name: text().notNull(),
   link: text().notNull(),
-  createdAt: text()
+  created_at: text()
     .notNull()
     .$defaultFn(() => new Date().toISOString()),
-  updatedAt: text()
+  updated_at: text()
     .notNull()
     .$defaultFn(() => new Date().toISOString()),
 });
 
 export const usersTable = sqliteTable('users', {
-  id: text()
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
-  updatedAt: text()
+  id: text().primaryKey().notNull(),
+  updated_at: text()
     .notNull()
     .$defaultFn(() => new Date().toISOString()),
-  createdAt: text()
+  created_at: text()
     .notNull()
     .$defaultFn(() => new Date().toISOString()),
   name: text().notNull(),
   email: text().notNull(),
+  refresh_token: text().notNull(),
+  photo_url: text().notNull(),
 });
 
 /** Junction table for many-to-many relationship between users and feeds */
 export const userFeedsTable = sqliteTable(
   'user_feeds',
   {
-    userId: text('user_id')
+    user_id: text('user_id')
       .notNull()
       .references(() => usersTable.id, { onDelete: 'cascade' }),
-    feedId: text('feed_id')
+    feed_id: text('feed_id')
       .notNull()
       .references(() => feedsTable.id, { onDelete: 'cascade' }),
-    subscribedAt: text('subscribed_at')
+    subscribed_at: text('subscribed_at')
       .notNull()
       .$defaultFn(() => new Date().toISOString()),
   },
-  (t) => [primaryKey({ columns: [t.userId, t.feedId] })]
+  (t) => [primaryKey({ columns: [t.user_id, t.feed_id] })]
 );

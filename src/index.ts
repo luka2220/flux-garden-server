@@ -1,16 +1,24 @@
 import { Hono } from 'hono';
+// import { jwt } from 'hono/jwt';
+// import type { JwtVariables } from 'hono/jwt';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 
-import type { HonoContext } from "./shared/types/index"
+import type { HonoContext } from './shared/types/index';
 import { errorHandler } from './middleware/errorHandler';
 import { feedService, userService, authService } from './services';
 import { getDbInstance } from './db/db';
 
 const app = new Hono<HonoContext>();
 
-// Inject database into context
+// Authentication Middleware
 app.use('*', async (c, next) => {
+  // const token = c.req.header('Authorization');
+
+  // if (!token || c.req.path != '/v1/auth/google/cb') {
+  //   return c.json({ message: 'Unauthorized' }, 401);
+  // }
+
   c.set('db', getDbInstance(c.env.DB));
   await next();
 });
