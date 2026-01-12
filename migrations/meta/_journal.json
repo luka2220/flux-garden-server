@@ -8,6 +8,20 @@
       "when": 1767845034440,
       "tag": "0000_light_shiva",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1768065137819,
+      "tag": "0001_new_peter_parker",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1768095766598,
+      "tag": "0002_even_wendell_rand",
+      "breakpoints": true
     }
   ]
 }

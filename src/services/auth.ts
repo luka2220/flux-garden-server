@@ -4,6 +4,9 @@ import type { HonoContext } from '@/shared/types';
 import { eq } from 'drizzle-orm';
 import { googleAuth } from '@hono/oauth-providers/google';
 import { usersTable } from '@/db/schema';
+import { sign } from 'hono/jwt';
+import { setCookie } from 'hono/cookie';
+import { ErrorCodes } from '@/config/constants';
 
 export const authService = new Hono<HonoContext>();
 
@@ -14,18 +17,20 @@ authService.get(
       client_id: c.env.GOOGLE_CLIENT_ID,
       client_secret: c.env.GOOGLE_CLIENT_SECRET,
       scope: ['openid', 'profile', 'email'],
+      access_type: 'offline',
+      prompt: 'consent',
     });
+
     return handler(c, next);
   },
   async (c) => {
-    // state=3lnahbdecc5-j3rsyilqp2-dpxp003ds3&code=4%2F0ASc3gC1cWMdmcvRXXHYEOcl8CoUsfn8hLE3l5OYlvy1CNAR_xiQC8p-xoozTNo52dZMASA
-    // scope=email+profile+openid+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.profile
-    // authuser=0
-    // prompt=none
-    const token = c.get('token');
-    const grantedScopes = c.get('granted-scopes');
-    const user = c.get('user-google');
     const db = c.get('db');
+
+    // Google OAuth data
+    const token = c.get('token');
+    const user = c.get('user-google');
+    const refreshToken = c.get('refresh-token');
+    const grantedScopes = c.get('granted-scopes');
 
     if (!token || !grantedScopes || !user) {
       console.log('Data missing from google response: ', {
@@ -37,19 +42,56 @@ authService.get(
       return c.redirect('http://localhost:5173');
     }
 
-    const userData = await db
+    const userRecords = await db
       .select()
       .from(usersTable)
-      .where(eq(usersTable.id, user?.id));
+      .where(eq(usersTable.id, user.id!))
+      .limit(1)
+      .execute();
 
-    // Do some auth/login logic here
-    // Cookie/token refreshing...
+    let userData = userRecords[0];
 
-    // return c.redirect('http://localhost:5173');
-    return c.json({
-      token,
-      grantedScopes,
-      user,
+    if (!userData) {
+      const newRecordData = {
+        id: user?.id!,
+        email: user?.email!,
+        name: user?.name!,
+        refresh_token: refreshToken?.token!,
+        photo_url: user?.picture!,
+      };
+
+      const [newUser] = await db
+        .insert(usersTable)
+        .values(newRecordData)
+        .returning();
+
+      if (!newUser) {
+        // TODO: Better error handling logic
+        throw new Error(
+          `${ErrorCodes.Auth} Error creating new user record: ${JSON.stringify(
+            newRecordData
+          )}`
+        );
+      }
+
+      userData = newUser;
+    }
+
+    const payload = {
+      userId: userData.id,
+      userEmail: userData.email,
+      exp: Math.floor(Date.now() / 1000) + 60 * 5, // 5 min token expiration
+    };
+    const jwtToken = await sign(payload, c.env.JWT_SECRET);
+
+    setCookie(c, 'authToken', jwtToken, {
+      maxAge: 60 * 5, // 5 minutes
+      // secure: true,
+      secure: false,
+      sameSite: 'Lax',
+      httpOnly: true,
     });
+
+    return c.redirect('http://localhost:5173/dashboard');
   }
 );
