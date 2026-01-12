@@ -1,4 +1,3 @@
-import { zValidator } from '@hono/zod-validator';
 import * as z from 'zod';
 
 /** Zod schema for creating a new feed */

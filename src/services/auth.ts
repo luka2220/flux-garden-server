@@ -4,6 +4,9 @@ import type { HonoContext } from '@/shared/types';
 import { eq } from 'drizzle-orm';
 import { googleAuth } from '@hono/oauth-providers/google';
 import { usersTable } from '@/db/schema';
+import { sign } from 'hono/jwt';
+import { setCookie } from 'hono/cookie';
+import { ErrorCodes } from '@/config/constants';
 
 export const authService = new Hono<HonoContext>();
 
@@ -17,14 +20,17 @@ authService.get(
       access_type: 'offline',
       prompt: 'consent',
     });
+
     return handler(c, next);
   },
   async (c) => {
+    const db = c.get('db');
+
+    // Google OAuth data
     const token = c.get('token');
+    const user = c.get('user-google');
     const refreshToken = c.get('refresh-token');
     const grantedScopes = c.get('granted-scopes');
-    const user = c.get('user-google');
-    const db = c.get('db');
 
     if (!token || !grantedScopes || !user) {
       console.log('Data missing from google response: ', {
@@ -46,26 +52,46 @@ authService.get(
     let userData = userRecords[0];
 
     if (!userData) {
-      // Create new user here
-      await db.insert(usersTable).values({
+      const newRecordData = {
         id: user?.id!,
         email: user?.email!,
         name: user?.name!,
         refresh_token: refreshToken?.token!,
         photo_url: user?.picture!,
-      });
+      };
+
+      const [newUser] = await db
+        .insert(usersTable)
+        .values(newRecordData)
+        .returning();
+
+      if (!newUser) {
+        // TODO: Better error handling logic
+        throw new Error(
+          `${ErrorCodes.Auth} Error creating new user record: ${JSON.stringify(
+            newRecordData
+          )}`
+        );
+      }
+
+      userData = newUser;
     }
 
-    // Create JWT here
-    // const payload = {
-    //   userId: user?.id!
-    // }
+    const payload = {
+      userId: userData.id,
+      userEmail: userData.email,
+      exp: Math.floor(Date.now() / 1000) + 60 * 5, // 5 min token expiration
+    };
+    const jwtToken = await sign(payload, c.env.JWT_SECRET);
 
-    return c.json({
-      token,
-      grantedScopes,
-      user,
-      refreshToken,
+    setCookie(c, 'authToken', jwtToken, {
+      maxAge: 60 * 5, // 5 minutes
+      // secure: true,
+      secure: false,
+      sameSite: 'Lax',
+      httpOnly: true,
     });
+
+    return c.redirect('http://localhost:5173/dashboard');
   }
 );

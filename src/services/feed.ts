@@ -1,17 +1,13 @@
 import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono';
-import Praser from 'rss-parser';
+import { XMLParser } from 'fast-xml-parser';
 import { feedsTable } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { postFeedBodySchema } from '../shared/schemas';
-import type { Database } from '../db/db';
+import { HonoContext } from '@/shared/types';
 
-type Variables = {
-  db: Database;
-};
-
-export const feedService = new Hono<{ Variables: Variables }>();
-const parser = new Praser();
+export const feedService = new Hono<HonoContext>();
+const parser = new XMLParser();
 
 feedService.get('/', async (c) => {
   const db = c.get('db');
@@ -41,10 +37,26 @@ feedService.get('/:id', async (c) => {
 
   const feed = d[0]!;
 
-  const parsedRss = await parser.parseURL(feed.link);
-
-  return c.json({
-    content: parsedRss,
-    feed: d,
-  });
+  try {
+    const response = await fetch(feed.link, {
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        Accept:
+          'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        Referer: 'https://www.google.com/',
+      },
+    });
+    const xml = await response.text();
+    const parsedRss = parser.parse(xml);
+    return c.json({
+      content: parsedRss,
+      feed: d,
+    });
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : 'Unknown Error';
+    console.error('Error fetching feed: ', msg);
+    throw new Error(`Error fetching feed: ${msg}`);
+  }
 });

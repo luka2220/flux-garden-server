@@ -6,9 +6,11 @@ node_modules
 # Editor
 .vscode
 .zed
-.claude
 
 # Misc
 todos.md
 notes-auth.md
 notes-db.md
+
+# MacOs
+.DS_Store
